@@ -1,0 +1,37 @@
+@import "tailwindcss";
+@import "@fontsource/open-sans/300.css";  
+@import "@fontsource/open-sans/400.css";  
+@import "@fontsource/open-sans/500.css";  
+@import "@fontsource/open-sans/600.css";  
+@import "@fontsource/open-sans/700.css";  
+@import "@fontsource/open-sans/800.css";  
+@import "@fontsource/open-sans/700-italic.css";
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  background-image: url(https://bytegrad.com/course-assets/css/2/pattern.svg),
+  linear-gradient(to bottom right, #F6AD55, #C05621 90%);
+}
+
+.app {
+  @apply grid grid-cols-[repeat(3,1fr)] grid-rows-[65px_minmax(600px,724px)_auto] w-[95vw] max-w-[1440px] min-h-[90vh] bg-white shadow-[0_30px_150px_rgba(0,0,0,0.65)] mx-auto my-5 overflow-hidden ;
+}
+
+.marked {
+  color: #F6AD55;
+}
+
+.console {
+  font-family: 'Consolas', monospace;
+}
