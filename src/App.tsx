@@ -4,10 +4,13 @@ import Button from "./components/Button";
 // import LinkedInButton from './components/LinkedInButton';
 import { Input, Typography } from "@material-tailwind/react";
 import Stepper from "./components/StepsContainer";
+import HelpButton from "./components/Help";
+import HelpModal from "./components/HelpModal"; 
 
 function App() {
   //state toggle for left container
   const [isLeftContainerVisible, setIsLeftContainerVisible] = useState(true);
+  const [modalShow, setModalShow] = useState(false);
   //recycle code from prelim proj
 
   return (
@@ -74,10 +77,16 @@ function App() {
             </div>
           </div>
           <div className="bg-[#319795] col-span-3 row-[4/4] p-4 text-white flex justify-center items-center">
-            <p className="text-sm">© 2025 Developed by TeamBa </p>
+            <p className="text-sm">© 2025 Developed by Group 7 as Partial Fulfillment on our SE Project </p>
           </div>
         </div>
       </div>
+
+      {/* Help Button */}
+      <HelpButton onClick={() => setModalShow(true)} />
+
+      {/* Help Modal */}
+      <HelpModal show={modalShow} onHide={() => setModalShow(false)} />
     </>
   );
 }
