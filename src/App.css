@@ -1,10 +1,10 @@
 @import "tailwindcss";
-@import "@fontsource/open-sans/300.css";  
-@import "@fontsource/open-sans/400.css";  
-@import "@fontsource/open-sans/500.css";  
-@import "@fontsource/open-sans/600.css";  
-@import "@fontsource/open-sans/700.css";  
-@import "@fontsource/open-sans/800.css";  
+@import "@fontsource/open-sans/300.css";
+@import "@fontsource/open-sans/400.css";
+@import "@fontsource/open-sans/500.css";
+@import "@fontsource/open-sans/600.css";
+@import "@fontsource/open-sans/700.css";
+@import "@fontsource/open-sans/800.css";
 @import "@fontsource/open-sans/700-italic.css";
 
 #root {
@@ -14,24 +14,48 @@
   text-align: center;
 }
 
-
 body {
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 1.2rem;
   display: flex;
   justify-content: center;
-  background-image: url(https://bytegrad.com/course-assets/css/2/pattern.svg),
-  linear-gradient(to bottom right, #F6AD55, #C05621 90%);
+  background-image:
+    url(https://bytegrad.com/course-assets/css/2/pattern.svg),
+    linear-gradient(to bottom right, #f6ad55, #c05621 90%);
+}
+
+.page {
+  @apply min-h-screen flex justify-center items-start p-4;
 }
 
 .app {
-  @apply grid grid-cols-[repeat(3,1fr)] grid-rows-[65px_minmax(600px,724px)_auto] w-[95vw] max-w-[1440px] min-h-[90vh] bg-white shadow-[0_30px_150px_rgba(0,0,0,0.65)] mx-auto my-5 overflow-hidden ;
+  @apply grid min-h-[90vh] bg-white shadow-[0_30px_150px_rgba(0,0,0,0.65)] mx-auto relative overflow-hidden;
+  width: min(95vw, 1440px);
+  grid-template-columns: minmax(350px, auto) minmax(500px, 1fr) 238.4px;
+  grid-template-rows: 65px minmax(600px, 724px) auto;
+}
+
+/* forgot the footer */
+.footer {
+  @apply bg-[#319795] col-span-3 p-4 text-white flex justify-center items-center;
+  width: 100%;
+}
+
+/* to mid be responsive*/
+.app.left-hidden {
+  grid-template-columns: 0 minmax(0, 1fr) 238.4px;
 }
 
 .marked {
-  color: #F6AD55;
+  color: #f6ad55;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
 }
 
 .console {
-  font-family: 'Consolas', monospace;
+  font-family: "Consolas", monospace;
 }

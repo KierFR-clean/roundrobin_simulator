@@ -62,22 +62,28 @@ const helpContent = [
       <>
         <ul>
           <li>
-            <b>Number of Cloudlets (Requests/Tasks):</b> Total number of incoming requests for processing.
+            <b>Number of Cloudlets (Requests/Tasks):</b> Total number of
+            incoming requests for processing.
           </li>
           <li>
-            <b>Cloudlet Length (MI):</b> Defines the computational demand of each task.
+            <b>Cloudlet Length (MI):</b> Defines the computational demand of
+            each task.
           </li>
           <li>
-            <b>Number of Processing Elements (Cores) per Cloudlet:</b> The number of cores a cloudlet can use.
+            <b>Number of Processing Elements (Cores) per Cloudlet:</b> The
+            number of cores a cloudlet can use.
           </li>
           <li>
-            <b>Cloudlet File Size (MB):</b> The file size of the task to be processed.
+            <b>Cloudlet File Size (MB):</b> The file size of the task to be
+            processed.
           </li>
           <li>
-            <b>Cloudlet Output Size (MB):</b> The output data size after processing.
+            <b>Cloudlet Output Size (MB):</b> The output data size after
+            processing.
           </li>
           <li>
-            <b>Utilization Model (Full, Stochastic, etc.):</b> Defines how cloudlets consume CPU, RAM, and bandwidth.
+            <b>Utilization Model (Full, Stochastic, etc.):</b> Defines how
+            cloudlets consume CPU, RAM, and bandwidth.
           </li>
         </ul>
       </>
@@ -88,16 +94,45 @@ const helpContent = [
     body: (
       <>
         <ul>
-          <li><b>Task Complexity:</b> Defines how demanding each request is in terms of resources.</li>
-          <li><b>Scheduling Interval:</b> The frequency at which load balancing decisions are made.</li>
-          <li><b>Processing Time per Request (ms):</b> The time taken by a VM to process a request (if applicable).</li>
-          <li><b>Request Arrival Rate:</b> The frequency at which requests arrive in the system.</li>
-          <li><b>Number of Requests:</b> The total number of incoming requests to be distributed.</li>
-          <li><b>Simulation Duration:</b> The total time period for which the load balancing simulation runs.</li>
-          <li><b>Start Simulation:</b> A button to initiate the Round Robin simulation.</li>
-          <li><b>Number of Data Centers:</b> The total number of data centers involved in load balancing.</li>
-          <li><b>Number of Virtual Machines (VMs) per Data Center:</b> Defines how many VMs each data center has.</li>
-          <li><b>Total Number of VMs:</b> The sum of all VMs across data centers.</li>
+          <li>
+            <b>Task Complexity:</b> Defines how demanding each request is in
+            terms of resources.
+          </li>
+          <li>
+            <b>Scheduling Interval:</b> The frequency at which load balancing
+            decisions are made.
+          </li>
+          <li>
+            <b>Processing Time per Request (ms):</b> The time taken by a VM to
+            process a request (if applicable).
+          </li>
+          <li>
+            <b>Request Arrival Rate:</b> The frequency at which requests arrive
+            in the system.
+          </li>
+          <li>
+            <b>Number of Requests:</b> The total number of incoming requests to
+            be distributed.
+          </li>
+          <li>
+            <b>Simulation Duration:</b> The total time period for which the load
+            balancing simulation runs.
+          </li>
+          <li>
+            <b>Start Simulation:</b> A button to initiate the Round Robin
+            simulation.
+          </li>
+          <li>
+            <b>Number of Data Centers:</b> The total number of data centers
+            involved in load balancing.
+          </li>
+          <li>
+            <b>Number of Virtual Machines (VMs) per Data Center:</b> Defines how
+            many VMs each data center has.
+          </li>
+          <li>
+            <b>Total Number of VMs:</b> The sum of all VMs across data centers.
+          </li>
         </ul>
       </>
     ),
@@ -137,6 +172,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ show, onHide }) => {
             align-items: center;
             justify-content: center;
             background: rgba(0, 0, 0, 0.5);
+            z-index:9999;
           }
 
           .help-modal {
@@ -253,16 +289,16 @@ const HelpModal: React.FC<HelpModalProps> = ({ show, onHide }) => {
           </div>
           <div className="modal-body">{helpContent[currentStep].body}</div>
           <div className="modal-footer">
-            <button 
-              className="modal-button" 
-              onClick={handleBack} 
+            <button
+              className="modal-button"
+              onClick={handleBack}
               disabled={currentStep === 0}
             >
               Back
             </button>
-            <button 
-              className="modal-button" 
-              onClick={handleNext} 
+            <button
+              className="modal-button"
+              onClick={handleNext}
               disabled={currentStep === helpContent.length - 1}
             >
               Next

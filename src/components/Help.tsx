@@ -52,7 +52,9 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.boxShadow = "0 6px 15px rgba(0, 0, 0, 0.3)";
-          const tooltip = e.currentTarget.parentElement?.querySelector(".tooltip") as HTMLElement;
+          const tooltip = e.currentTarget.parentElement?.querySelector(
+            ".tooltip"
+          ) as HTMLElement;
           if (tooltip) {
             tooltip.style.opacity = "1";
             tooltip.style.visibility = "visible";
@@ -60,7 +62,9 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
-          const tooltip = e.currentTarget.parentElement?.querySelector(".tooltip") as HTMLElement;
+          const tooltip = e.currentTarget.parentElement?.querySelector(
+            ".tooltip"
+          ) as HTMLElement;
           if (tooltip) {
             tooltip.style.opacity = "0";
             tooltip.style.visibility = "hidden";
