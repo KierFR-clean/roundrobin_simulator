@@ -25,7 +25,7 @@ body {
 }
 
 .page {
-  @apply min-h-screen flex justify-center items-start p-4;
+  @apply flex justify-center items-start;
 }
 
 .app {

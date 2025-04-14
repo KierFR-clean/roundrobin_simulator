@@ -1,260 +1,415 @@
-import React, { useState } from "react";
-import { Card, Typography, Alert } from "@material-tailwind/react";
+import React, { useState, useEffect, useRef } from "react";
 import Button from "../Button";
-import DCVis from "../reactflow/DCVis";
-import {
-  FaInfoCircle,
-  FaChartLine,
-  FaExclamationTriangle,
-} from "react-icons/fa";
+import { FaChartLine, FaExclamationTriangle } from "react-icons/fa";
+import { SimulationData } from "../../types/SimulationData";
+import { LogResponse } from "../../hooks/useSimulation";
 
-//array for data
 interface VisualizationViewProps {
-  data: {
-    unevenResults: any[];
-    evenResults: any[];
-    vmResourceUtilizationEven: any;
-    vmResourceUtilizationUneven: any;
-    responseTimeEven: any;
-    responseTimeUneven: any;
-    hostResourceUtilization: any;
-  };
-  onRestart: () => void; // restart simulation
+  data: SimulationData;
+  logs?: string;
+  onRestart: () => void;
+  totalCpuPerVm: number; // Prop for total CPU per VM
+  totalRamPerVm: number; // Prop for total RAM per VM
 }
 
-const VisualizationView = ({ data }: VisualizationViewProps) => {
-  const [workloadType, setWorkloadType] = useState<"Even" | "Uneven">("Even");
-  const [showInsights, setShowInsights] = useState(false);
-// get analysis of data
-  const genInsights = seriesVis(data);
+// Helper function to format utilization as percentage
+const formatUtil = (value: number, total: number): number => {
+  return (value / total) * 100; // Convert absolute value to percentage
+};
+
+// Generate insights for response time and utilization
+const genInsights = (data: SimulationData) => {
+  const svdate = data;
+
+  if (!svdate.summary) {
+    return (
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-4">Simulation Insights</h3>
+        <div className="p-4 rounded-lg mb-4 bg-yellow-100 text-yellow-800">
+          <div className="flex items-center">
+            <FaExclamationTriangle className="h-6 w-6 mr-2" />
+            <div>
+              <h4 className="font-semibold">Insufficient data for insights.</h4>
+              <p>Summary data is missing.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const averageResponseTime = svdate.summary.averageResponseTime;
+
+  const getResponseTimeInsight = (
+    avgResponseTime: number
+  ): { severity: "success" | "info" | "warning"; message: string } => {
+    let severity: "success" | "info" | "warning";
+    let message = "";
+
+    if (avgResponseTime < 50) {
+      severity = "success";
+      message = "Response time is excellent.";
+    } else if (avgResponseTime < 100) {
+      severity = "info";
+      message = "Response time is acceptable.";
+    } else {
+      severity = "warning";
+      message = "Response time is high. Consider optimization.";
+    }
+
+    return { severity, message };
+  };
+
+  const avgCpuUtil =
+    svdate.vmUtilization.length > 0
+      ? svdate.vmUtilization.reduce(
+          (sum, vm) => sum + formatUtil(vm.cpuUtilization, totalCpuPerVm),
+          0
+        ) / svdate.vmUtilization.length
+      : 0;
+  const avgRamUtil =
+    svdate.vmUtilization.length > 0
+      ? svdate.vmUtilization.reduce(
+          (sum, vm) => sum + formatUtil(vm.ramUtilization, totalRamPerVm),
+          0
+        ) / svdate.vmUtilization.length
+      : 0;
+
+  const getUtilizationInsight = (
+    cpuUtil: number,
+    ramUtil: number
+  ): Array<{ severity: "success" | "info" | "warning"; message: string }> => {
+    const insights = [];
+
+    if (cpuUtil > 80) {
+      insights.push({
+        severity: "warning",
+        message: `High CPU utilization (${cpuUtil.toFixed(1)}%). Consider scaling resources.`,
+      });
+    } else if (cpuUtil > 50) {
+      insights.push({
+        severity: "info",
+        message: `Moderate CPU utilization (${cpuUtil.toFixed(1)}%).`,
+      });
+    }
+
+    if (ramUtil > 80) {
+      insights.push({
+        severity: "warning",
+        message: `High RAM utilization (${ramUtil.toFixed(1)}%). Consider memory optimization.`,
+      });
+    } else if (ramUtil > 50) {
+      insights.push({
+        severity: "info",
+        message: `Moderate RAM utilization (${ramUtil.toFixed(1)}%).`,
+      });
+    }
+
+    return insights;
+  };
+
+  const responseTimeAnalysis = getResponseTimeInsight(averageResponseTime);
+  const utilizationInsights = getUtilizationInsight(avgCpuUtil, avgRamUtil);
 
   return (
-    <div className="m-3 p-6 h-[670px] w-full overflow-y-auto">
-      <div className="p-8 bg-blue-gray-50 text-[#273f82]">
-        <Typography
-          variant="h2"
-          color="blue-gray"
-          className="mb-6 text-center text-sm rounded-full shadow-md text-[#273f82] border-[#1175c6] font-bold border-3 p-2 bg-[#fff] w-fit"
-        >
-          Datacenter Visualization
-        </Typography>
+    <div className="mb-6">
+      <h3 className="text-lg font-semibold mb-4">Simulation Insights</h3>
 
-        <div className="flex justify-between items-center mb-6">
-          <Button onClick={() => setShowInsights(!showInsights)}>
-            {showInsights ? "Close" : "Show Insights"}
-          </Button>
+      <div
+        className={`p-4 rounded-lg mb-4 ${
+          responseTimeAnalysis.severity === "success"
+            ? "bg-green-100 text-green-800"
+            : responseTimeAnalysis.severity === "info"
+              ? "bg-blue-100 text-blue-800"
+              : "bg-yellow-100 text-yellow-800"
+        }`}
+      >
+        <div className="flex items-center">
+          <FaChartLine className="h-6 w-6 mr-2" />
+          <div>
+            <h4 className="font-semibold">{responseTimeAnalysis.message}</h4>
+            <p>Average Response Time: {averageResponseTime.toFixed(2)}s</p>
+          </div>
         </div>
-
-        {showInsights && genInsights()}
-
-        <Card className="p-4 shadow-lg mb-6">
-          <DCVis
-            simulationData={data}
-            workloadType={workloadType}
-            onWorkloadToggle={() =>
-              setWorkloadType((prev) => (prev === "Even" ? "Uneven" : "Even"))
-            }
-          />
-        </Card>
       </div>
+
+      {utilizationInsights.map((insight, index) => (
+        <div
+          key={index}
+          className={`p-4 rounded-lg mb-4 ${
+            insight.severity === "warning"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-blue-100 text-blue-800"
+          }`}
+        >
+          <div className="flex items-center">
+            <FaExclamationTriangle className="h-6 w-6 mr-2" />
+            <h4 className="font-semibold">{insight.message}</h4>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
 
-function seriesVis(data: VisualizationViewProps["data"]) {
-  return () => {
-    //convert to percentages for util
-    const formatUtil = (value: number) => {
-      return value >= 1 ? value : value * 100;
+const VisualizationView: React.FC<VisualizationViewProps> = ({
+  data,
+  logs,
+  onRestart,
+  totalCpuPerVm,
+  totalRamPerVm,
+}) => {
+  const [showInsights, setShowInsights] = useState(false);
+  const [schedulingLogs, setSchedulingLogs] = useState<
+    LogResponse["schedulingLog"]
+  >([]);
+  const [vmMetrics, setVmMetrics] = useState<LogResponse["vmMetrics"]>([]);
+  const [animatedLogs, setAnimatedLogs] = useState<
+    LogResponse["schedulingLog"]
+  >([]);
+  const animationTimeouts = useRef<NodeJS.Timeout[]>([]); // Track timeouts for cleanup
+
+  useEffect(() => {
+    if (logs) {
+      try {
+        const parsedLogs: LogResponse = JSON.parse(logs);
+        console.log("Parsed logs in VisualizationView:", parsedLogs);
+        setSchedulingLogs(parsedLogs.schedulingLog || []);
+        setVmMetrics(parsedLogs.vmMetrics || []);
+      } catch (e) {
+        console.error("Error parsing logs in VisualizationView:", e);
+      }
+    }
+  }, [logs]);
+
+  // Animate the scheduling logs
+  useEffect(() => {
+    // Clean up any existing timeouts to prevent duplicates
+    animationTimeouts.current.forEach((timeout) => clearTimeout(timeout));
+    animationTimeouts.current = [];
+
+    // Combine logs from /logs and /run, and deduplicate by description
+    const logsToAnimate =
+      schedulingLogs.length > 0 ? schedulingLogs : data.schedulingLog || [];
+    const uniqueLogs = Array.from(
+      new Map(logsToAnimate.map((log) => [log.description, log])).values()
+    );
+
+    // Reset animated logs
+    setAnimatedLogs([]);
+
+    // Animate each log entry
+    uniqueLogs.forEach((log, index) => {
+      const timeout = setTimeout(() => {
+        setAnimatedLogs((prev) => {
+          // Avoid adding duplicates
+          if (
+            prev.some(
+              (existingLog) => existingLog.description === log.description
+            )
+          ) {
+            return prev;
+          }
+          return [...prev, log];
+        });
+      }, index * 1000); // 1000ms delay between each log entry
+      animationTimeouts.current.push(timeout);
+    });
+
+    // Clean up timeouts on unmount or when logs change
+    return () => {
+      animationTimeouts.current.forEach((timeout) => clearTimeout(timeout));
     };
-//gjuss pass
-    const svdate = data;
-    //count for diff
-    const responseTimeDiff = Math.abs(
-      svdate.responseTimeEven.averageResponseTime -
-        svdate.responseTimeUneven.averageResponseTime
-    );
+  }, [schedulingLogs, data.schedulingLog]);
 
-    const getResponseTimeInsight = (
-      diff: number,
-      even: number,
-      uneven: number
-    ) => {
-      //more than two secs or reached two secs
-      if (diff >= 120) {
-        console.log(diff);
-        return {
-          severity: "warning",
-          message: `Critical performance variance detected. The ${
-            even > uneven ? "even" : "uneven"
-          } workload distribution shows ${diff.toFixed(1)}s slower response times. 
-          Consider implementing auto-scaling policies or reviewing resource allocation strategy.
-          Recommendation: Implement dynamic resource allocation to handle workload variations.`,
-        };
-      } else if (diff > 60) {
-        return {
-          severity: "info",
-          message: `Moderate performance difference observed (${diff.toFixed(1)}s variance). 
-          While system stability is maintained, there's room for optimization in the ${
-            even > uneven ? "even" : "uneven"
-          } workload scenario. 
-          Recommendation: Fine-tune VM allocation policy for better load distribution.`,
-        };
-      } else {
-        return {
-          severity: "success",
-          message: `Excellent performance consistency across workload patterns (${diff.toFixed(
-            2
-          )}s variance). The Round Robin algorithm is effectively managing resource distribution.
-          Recommendation: Current configuration is optimal for the given workload patterns.`,
-        };
-      }
-    };
-    //compare
-    const evenCpuUtil =
-      svdate.vmResourceUtilizationEven.averageCpuUtilizationEven;
-    const unevenCpuUtil =
-      svdate.vmResourceUtilizationUneven.averageCpuUtilizationUneven;
-    const utilizationDiff = Math.abs(evenCpuUtil - unevenCpuUtil);
-    const memoryUtil = formatUtil(
-      svdate.hostResourceUtilization.averageRamUtilization
-    );
-    const bwUtil = formatUtil(
-      svdate.hostResourceUtilization.averageBwUtilization
-    );
-
-    const getUtilizationInsight = (
-      cpuDiff: number,
-      memUtil: number,
-      bwUtil: number
-    ) => {
-      //put in array of objects
-      const insights = [];
-
-      if (cpuDiff > 25) {
-        insights.push({
-          severity: "warning",
-          message: `Significant resource utilization imbalance (${cpuDiff.toFixed(
-            1
-          )}% variance). This indicates potential resource bottlenecks under different workload patterns.
-          Recommendation: Consider implementing predictive scaling based on workload patterns.`,
-        });
-      } else if (cpuDiff > 15) {
-        insights.push({
-          severity: "info",
-          message: `Moderate resource utilization variance (${cpuDiff.toFixed(
-            1
-          )}%). System shows adaptability but could benefit from optimization.
-          Recommendation: Review VM sizing and distribution strategy.`,
-        });
-      } else {
-        insights.push({
-          severity: "success",
-          message: `Excellent resource balance achieved (${cpuDiff.toFixed(
-            1
-          )}% variance). Round Robin algorithm is effectively distributing workload.`,
-        });
-      }
-
-      if (memUtil > 80) {
-        insights.push({
-          severity: "warning",
-          message: `High memory utilization (${memUtil.toFixed(
-            1
-          )}%). Consider memory optimization or scaling.`,
-        });
-      }
-
-      if (bwUtil > 75) {
-        insights.push({
-          severity: "warning",
-          message: `Network bandwidth approaching capacity (${bwUtil.toFixed(
-            1
-          )}%). Consider network optimization strategies.`,
-        });
-      }
-
-      return insights;
-    };
-    //compare
-    const responseTimeAnalysis = getResponseTimeInsight(
-      responseTimeDiff,
-      svdate.responseTimeEven.averageResponseTime,
-      svdate.responseTimeUneven.averageResponseTime
-    );
-
-    const utilizationInsights = getUtilizationInsight(
-      utilizationDiff,
-      memoryUtil,
-      bwUtil
-    );
-
-    // ... existing return JSX with updated insights ...
+  if (!data || !data.cloudlets) {
     return (
-      <div className="mb-6">
-        <Card placeholder="" className="p-6 shadow-lg bg-white">
-          <Typography
-            placeholder=""
-            variant="h5"
-            color="blue-gray"
-            className="mb-4 font-semibold flex items-center gap-2"
-          >
-            <FaChartLine className="text-[#f6ad55]" />
-            Performance Analysis Report
-          </Typography>
-
-          <div className="space-y-4 p-3">
-            <Alert
-              color={responseTimeAnalysis.severity}
-              icon={<FaInfoCircle className="text-[#f6ad55]" />}
-              className="mb-4 shadow-md border-3 border-[#1678c7]"
-            >
-              <Typography placeholder="" className="font-medium text-gray-900">
-                <span className="marked font-semibold">
-                  Response Time Analysis
-                </span>
-              </Typography>
-              <Typography
-                placeholder=""
-                className="mt-2 text-sm text-gray-900 text-justify"
-              >
-                {responseTimeAnalysis.message}
-                <br />
-                Even Workload:{" "}
-                {svdate.responseTimeEven.averageResponseTime.toFixed(2)}s
-                <br />
-                Uneven Workload:{" "}
-                {svdate.responseTimeUneven.averageResponseTime.toFixed(2)}s
-              </Typography>
-            </Alert>
-
-            {utilizationInsights.map((insight, index) => (
-              <Alert
-                key={index}
-                color={insight.severity}
-                icon={<FaExclamationTriangle className="text-[#f6ad55]" />}
-                className="mb-4 shadow-md border-3 border-[#1678c7]"
-              >
-                <Typography
-                  placeholder=""
-                  className="font-medium text-gray-900"
-                >
-                  <span className="marked font-semibold">
-                    Resource Analysis
-                  </span>
-                </Typography>
-                <Typography
-                  placeholder=""
-                  className="mt-2 text-sm text-gray-900 text-justify"
-                >
-                  {insight.message}
-                </Typography>
-              </Alert>
-            ))}
-          </div>
-        </Card>
+      <div className="p-4">
+        <div className="p-4 bg-red-100 text-red-800 rounded-lg">
+          No simulation data available
+        </div>
       </div>
     );
-  };
-}
+  }
+
+  const currentWorkloadData = data.cloudlets || [];
+  const effectiveVmMetrics =
+    vmMetrics.length > 0 ? vmMetrics : data.vmUtilization || [];
+
+  return (
+    <div className="m-3 p-6 h-[670px] w-full overflow-y-auto">
+      <div className="p-8 bg-gray-100 text-[#273f82]">
+        <h2 className="mb-6 text-center text-sm rounded-full shadow-md text-[#273f82] border-[#1175c6] font-bold border-2 p-2 bg-[#fff] w-fit">
+          Results
+        </h2>
+
+        {/* <div className="flex justify-between items-center mb-6">
+          <Button onClick={() => setShowInsights(!showInsights)}>
+            {showInsights ? "Close" : "Show Insights"}
+          </Button>
+        </div> */}
+
+        {showInsights && genInsights(data)}
+
+        <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center">
+          {data.summary ? (
+            <h3 className="text-lg font-bold text-blue-800">
+              Average Response Time:{" "}
+              <span className="text-2xl text-blue-900">
+                {data.summary.averageResponseTime.toFixed(2)}s
+              </span>
+            </h3>
+          ) : (
+            <h3 className="text-lg font-bold text-blue-800">
+              Average Response Time:{" "}
+              <span className="text-2xl text-blue-900">N/A</span>
+            </h3>
+          )}
+        </div>
+
+        <div className="mb-6 p-4 bg-white shadow-lg rounded-lg">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold mb-4">
+              Real-time Scheduling Log (Round Robin Simulation)
+            </h3>
+            <Button onClick={() => setAnimatedLogs([])}>
+              Replay Animation
+            </Button>
+          </div>
+          <div className="max-h- overflow-y-auto">
+            {animatedLogs.length > 0 ? (
+              animatedLogs.map((log, index) => (
+                <div
+                  key={index}
+                  className="mb-2 text-sm text-gray-700 animate-slideIn"
+                >
+                  {log.description}
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500">
+                No scheduling logs available. Click "Replay Animation" to start.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-white shadow-lg rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">
+            Cloudlet-VM Assignments
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cloudlet ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    VM ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Submission Time (s)
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentWorkloadData.map((assignment, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {assignment.cloudletId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {assignment.vmId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {assignment.submissionTime?.toFixed(2) || "N/A"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-white shadow-lg rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">
+            VM Resource Utilization
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    VM ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    CPU Utilization (%)
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RAM Utilization (%)
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Number of Cloudlets
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {effectiveVmMetrics.length > 0 ? (
+                  effectiveVmMetrics.map((vm, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap">{vm.vmId}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {formatUtil(vm.cpuUtilization, totalCpuPerVm).toFixed(
+                          2
+                        )}
+                        %
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {formatUtil(vm.ramUtilization, totalRamPerVm).toFixed(
+                          2
+                        )}
+                        %
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {vm.numCloudlets}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
+                      No VM utilization data available.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .animate-slideIn {
+          animation: slideIn 0.5s ease-in-out forwards;
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default VisualizationView;
