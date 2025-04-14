@@ -215,14 +215,14 @@ const SkeletonLoader = ({ section = "dashboard" }) => {
             color="blue-gray"
             className="mb-6 text-center text-sm rounded-full shadow-md text-[#273f82] border-[#1175c6] font-bold border-3 p-2 bg-[#fff] w-fit"
           >
-            Datacenter Visualization (No Data Yet)
+            Results (No Data Yet)
           </Typography>
 
           <Card className="p-4 shadow-lg mb-6">
             <div className="h-[400px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
               <Typography color="gray" className="text-center">
-                Datacenter visualization will appear here after simulation and
-                upon submitting the form
+                Results will appear here after simulation and upon submitting
+                the form
               </Typography>
             </div>
           </Card>

@@ -41,6 +41,7 @@ const CloudletConfig = ({ onUpdate, initialData }: CloudletConfigProps) => {
         <Input
           type="number"
           size="lg"
+          min={1}
           name="numCloudlets"
           value={config.numCloudlets}
           onChange={handleChange}

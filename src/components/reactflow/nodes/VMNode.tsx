@@ -11,7 +11,6 @@ interface VMNodeProps {
     };
   };
 }
-z;
 
 const VMNode = ({ data }: VMNodeProps) => {
   return (
